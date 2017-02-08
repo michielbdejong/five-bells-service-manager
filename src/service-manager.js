@@ -8,6 +8,7 @@ const request = require('superagent')
 const util = require('./util')
 const chalk = require('chalk')
 const sqlite = require('sqlite')
+const debug = require('debug')('five-bells-service-manager')
 const hashPassword = require('five-bells-shared/utils/hashPassword')
 
 const COMMON_ENV = Object.assign({}, {
@@ -163,6 +164,7 @@ class ServiceManager {
 
   startConnector (name, options) {
     this.connectors[name] = options.pairs
+    debug('startConnector options.integrationTestUri:',options.integrationTestUri)
     return this._npm(['start'], name, {
       env: Object.assign({}, COMMON_ENV, {
         CONNECTOR_LEDGERS: JSON.stringify(options.credentials),
@@ -170,14 +172,17 @@ class ServiceManager {
         CONNECTOR_MAX_HOLD_TIME: 600,
         CONNECTOR_ROUTES: JSON.stringify(options.routes || []),
         CONNECTOR_ROUTE_BROADCAST_ENABLED: options.routeBroadcastEnabled === undefined || options.routeBroadcastEnabled,
-        CONNECTOR_ROUTE_BROADCAST_INTERVAL: 10 * 60 * 1000,
-        CONNECTOR_ROUTE_EXPIRY: 11 * 60 * 1000, // don't expire routes
+        CONNECTOR_ROUTE_BROADCAST_INTERVAL: options.routeBroadcastInterval || process.env.CONNECTOR_ROUTE_BROADCAST_INTERVAL || 1 * 60 * 1000,
+        CONNECTOR_ROUTE_EXPIRY: options.routeExpiry || process.env.CONNECTOR_ROUTE_EXPIRY || 2 * 60 * 1000,
         CONNECTOR_AUTOLOAD_PEERS: true,
         CONNECTOR_FX_SPREAD: options.fxSpread || '',
         CONNECTOR_SLIPPAGE: options.slippage || '',
         CONNECTOR_ADMIN_USER: this.adminUser,
         CONNECTOR_ADMIN_PASS: this.adminPass,
         CONNECTOR_BACKEND: options.backend || 'one-to-one',
+        CONNECTOR_INTEGRATION_TEST_NAME: options.integrationTestName || process.env.INTEGRATION_TEST_NAME || name,
+        CONNECTOR_INTEGRATION_TEST_URI: options.integrationTestUri || process.env.INTEGRATION_TEST_URI || '',
+        CONNECTOR_INTEGRATION_TEST_PORT: options.integrationTestPort || process.env.INTEGRATION_TEST_PORT || '',
         CONNECTOR_NOTIFICATION_VERIFY: !!options.notificationKeys,
         CONNECTOR_NOTIFICATION_KEYS: options.notificationKeys ? JSON.stringify(options.notificationKeys) : ''
       }),
