@@ -37,6 +37,7 @@ class ServiceManager {
    * @param {String} [_opts.adminPass]
    */
   constructor (depsDir, dataDir, _opts) {
+    console.log('ASDF, Running on branch da-test-integration-loader')
     this.depsDir = depsDir
     this.dataDir = dataDir
     try {
